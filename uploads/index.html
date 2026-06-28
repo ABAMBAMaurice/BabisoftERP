@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width,initial-scale=1">
+	<title>Access Denied</title>
+	<style>
+		body{font-family:Inter,Segoe UI,Arial,sans-serif;background:#f5f7fb;color:#222;margin:0;display:flex;align-items:center;justify-content:center;height:100vh}
+		.card{background:#fff;border:1px solid #e3e8ef;padding:36px 40px;border-radius:8px;box-shadow:0 6px 24px rgba(32,40,60,0.06);max-width:560px;text-align:center}
+		h1{margin:0 0 8px;font-size:28px;color:#cf1f1f}
+		p{margin:0 0 18px;color:#4b5563}
+		.actions{display:flex;gap:12px;justify-content:center}
+		a,button{padding:10px 16px;border-radius:6px;border:0;text-decoration:none;cursor:pointer;font-weight:600}
+		a{background:#eef2ff;color:#2b4de6}
+		button{background:#f3f4f6;color:#111}
+		small{display:block;margin-top:12px;color:#9aa3b2}
+	</style>
+</head>
+<body>
+	<div class="card" role="alert" aria-live="polite">
+		<h1>Access Denied</h1>
+		<p>You don't have permission to view this page or resource.</p>
+		<div class="actions">
+			<a href="/">Go to home</a>
+			<button onclick="location.reload()">Retry</button>
+		</div>
+		<small>If you believe this is an error, contact the site administrator.</small>
+	</div>
+</body>
+</html>

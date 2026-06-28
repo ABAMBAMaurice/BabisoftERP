@@ -1,0 +1,28 @@
+{
+	"php":{		
+		"prefix": ["<?"],
+		"body":["<?php\n\t${1:body}\n\n?>"],
+    	"description": "php markups."
+	},
+	"Table": {
+		"prefix": ["ttable"],
+		"body":["class ${1:tableClassName} extends Table {\n\t\tpublic function __construct()\n\t\t{\n\t\t\tparent::__construct(${2:tableID}, '${3:physicalTableName}');\n\n\t\t\t$$this->field(1, '${4:key}', FieldType::integer(),caption:'${5:caption}');\n\t\t\t${6://field}\n\n\t\t\t$$this->Keys('${4:key}');\n\t\t}\n}"],
+    	"description": "Table snippet"
+	},
+	"PageList":{
+		"prefix": ["tlist"],
+		"body": "class ${1:pageClassName} extends Page {\n\t\tpublic function __construct() {\n\t\t\tparent::__construct(${2:pageID}, '${3:pageName}',PagesType::List,'${4:caption}');\n\t\t\t$$this->sourceTable = new ${5:sourceTable}();\n\t\t\t$$this->setAction();\n\t\t\t$$this->layout();\n\t\t\t$$this->editable = ${6:false};\n\t\t}\n\n\t\tfunction setAction(){\n\n\t\t}\n\n\t\tfunction layout(){\n\t\t\t$$this->repeater('${7:groupName}', '${8:groupCaption}',\n\t\t\t${9://fields}\n\t\t\t);\n\t\t}\n\t}",
+		"description": "List Page snippet"
+	},
+	"PageCard":{
+		"prefix": ["tcard"],
+		"body": "class ${1:pageClassName} extends Page {\n\t\tpublic function __construct() {\n\t\t\tparent::__construct(${2:pageID}, '${3:pageName}',PagesType::Card,'${4:caption}');\n\t\t\t$$this->sourceTable = new ${5:sourceTable}();\n\t\t\t$$this->setAction();\n\t\t\t$$this->layout();\n\t\t\t$$this->editable = ${6:false};\n\t\t}\n\n\t\tfunction setAction(){\n\n\t\t}\n\n\t\tfunction layout(){\n\t\t\t$$this->group('${7:groupName}', '${8:groupCaption}',\n\t\t\t${9://fields}\n\t\t\t);\n\t\t}\n\t}",
+		"description": "Card Page snippet"
+	},
+	"Codeunit":{
+		"prefix": ["tcodeunit"],
+		"body": "class ${1:ClassName} {\n\t\tpublic static function ${3:name} {\n\t\t${4://body}\n\t\t}\n\t}",
+		"description": "Card Page snippet"
+	}
+
+}

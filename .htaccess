@@ -1,0 +1,51 @@
+
+# Configuration de sécurité Apache
+RewriteEngine On
+
+# Limites upload PHP (pour mod_php — ignoré en FPM/CGI, voir .user.ini)
+<IfModule mod_php.c>
+    php_value upload_max_filesize 20M
+    php_value post_max_size 25M
+    php_flag file_uploads On
+</IfModule>
+<IfModule mod_php8.c>
+    php_value upload_max_filesize 20M
+    php_value post_max_size 25M
+    php_flag file_uploads On
+</IfModule>
+
+# Répertoire racine (ajuste si ton site est dans un sous-dossier)
+#RewriteBase /
+
+
+
+
+# Protection des dossiers sensibles
+RedirectMatch 403 /\.git
+RedirectMatch 403 /\.vscode
+RedirectMatch 403 /\.well-known
+RedirectMatch 403 /Apps
+RedirectMatch 403 /vendor
+RedirectMatch 403 /Modules
+
+# Masquer la signature du serveur
+<IfModule mod_headers.c>
+    Header unset Server
+    Header unset X-Powered-By
+    Header always set X-Content-Type-Options nosniff
+    Header always set X-Frame-Options DENY
+    Header always set X-XSS-Protection "1; mode=block"
+</IfModule>
+
+# HTTP → HTTPS (dynamique — fonctionne sur tout domaine, ignoré en local)
+RewriteCond %{HTTPS} off
+RewriteCond %{HTTP:X-Forwarded-SSL} !on
+RewriteCond %{HTTP_HOST} !^localhost [NC]
+RewriteCond %{HTTP_HOST} !^127\.0\.0\.1
+RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [R=301,L]
+
+# Rediriger tout vers index.php (sauf fichiers/dossiers existants)
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^(.*)$ index.php [L,QSA]
+
