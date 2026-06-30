@@ -11,9 +11,11 @@
             // PHP normalise les headers custom via $_SERVER (HTTP_X_MOBILE_CLIENT) — méthode fiable
             $isMobile = ($_SERVER['HTTP_X_MOBILE_CLIENT'] ?? '') === '1';
             if (!$isMobile) {
-                $data['csrf-token'] = getallheaders()['csrf-token'] ?? '';
-                if (empty($data['csrf-token']) || !AuthenticationManagement::verifyCSRFToken($data['csrf-token'], $_SERVER['REMOTE_ADDR'])) {
-                    Security::logSecurityEvent('csrf-token_invalid', ['ip' => $_SERVER['REMOTE_ADDR']]);
+                $hdrs = array_change_key_case(getallheaders(), CASE_LOWER);
+                $data['csrf-token'] = $hdrs['csrf-token'] ?? '';
+                $clientIp = ($_SERVER['REMOTE_ADDR'] === '::1') ? '127.0.0.1' : $_SERVER['REMOTE_ADDR'];
+                if (empty($data['csrf-token']) || !AuthenticationManagement::verifyCSRFToken($data['csrf-token'], $clientIp)) {
+                    Security::logSecurityEvent('csrf-token_invalid', ['ip' => $clientIp]);
                     http_response_code(403);
                     return json_encode(array("status" => 403, "message" => "Token CSRF invalide"));
                 }
@@ -110,7 +112,7 @@
                                 "Is_admin"    => $user->Is_admin->value == '1',
                             ],
                             "token"      => $session3->session_token->value,
-                            "csrf-token" => getallheaders()['csrf-token'] ,
+                            "csrf-token" => $data['csrf-token'] ?? '',
                             //"csrf-token" => Security::generateCSRFToken(),
                         ],
                     ]);
@@ -137,9 +139,11 @@
 
             $isMobile = ($_SERVER['HTTP_X_MOBILE_CLIENT'] ?? '') === '1';
             if (!$isMobile) {
-                $data['csrf-token'] = getallheaders()['csrf-token'] ?? '';
-                if (empty($data['csrf-token']) || !AuthenticationManagement::verifyCSRFToken($data['csrf-token'], $_SERVER['REMOTE_ADDR'])) {
-                    Security::logSecurityEvent('csrf-token_invalid', ['ip' => $_SERVER['REMOTE_ADDR']]);
+                $hdrs = array_change_key_case(getallheaders(), CASE_LOWER);
+                $data['csrf-token'] = $hdrs['csrf-token'] ?? '';
+                $clientIp = ($_SERVER['REMOTE_ADDR'] === '::1') ? '127.0.0.1' : $_SERVER['REMOTE_ADDR'];
+                if (empty($data['csrf-token']) || !AuthenticationManagement::verifyCSRFToken($data['csrf-token'], $clientIp)) {
+                    Security::logSecurityEvent('csrf-token_invalid', ['ip' => $clientIp]);
                     http_response_code(403);
                     return json_encode(array("status" => 403, "message" => "Token CSRF invalide"));
                 }

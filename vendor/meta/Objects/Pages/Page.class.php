@@ -13,12 +13,13 @@
         private string $_name;
         private string $_caption;
         private PagesType $_type;
-        private Table $_rec;
+        private ?Table $_rec = null;
         public static $_pageCollection = array();
         private $_fieldsList = array();
         private $_actionsList = array();
         private $_groups = array();
         private $_repeaters = array();
+        private array $_widgets = [];
         private $subPage = '{}';
         private $subPageLinks = array();
         private $_bodyHTML = '';
@@ -180,6 +181,7 @@
                 case 'sourceTable':
                 case 'rec':
                     $this->_rec = $value;
+                    $this->registerInViews();
                     break;
                 case 'html':
                     $this->_bodyHTML = $value;
@@ -329,6 +331,18 @@
         public function __toString()
         {
             $this->onOpenPage();
+
+            if ($this->_type === PagesType::RoleCenter) {
+                $r  = '{';
+                $r .= '"id":"'.$this->_id.'",';
+                $r .= '"name":"'.$this->_name.'",';
+                $r .= '"PageType":"RoleCenter",';
+                $r .= '"Caption":"'.$this->_caption.'",';
+                $r .= '"record":'.$this->show();
+                $r .= '}';
+                return $r;
+            }
+
             if($this->subPage != '{}') {
                 if(count($this->subPageLinks) > 0) {
                     foreach ($this->subPageLinks as $key => $field) {
@@ -463,7 +477,32 @@
 
         public function OnAfterGetRecord(Table &$record){}
 
+        /**
+         * Ajoute un widget au RoleCenter (stat, shortcut, activity).
+         * $value peut être une valeur scalaire ou un callable (évalué à l'affichage).
+         */
+        public function widget(string $name, string $type, string $caption, string $icon = '', mixed $value = null, int $linkedPageId = 0, string $style = 'primary') {
+            $this->_widgets[$name] = [
+                'name'         => $name,
+                'type'         => $type,
+                'caption'      => $caption,
+                'icon'         => $icon,
+                'value'        => $value,
+                'linkedPageId' => $linkedPageId,
+                'style'        => $style,
+            ];
+        }
+
         public function show(){
+            if ($this->_type === PagesType::RoleCenter) {
+                $widgets = [];
+                foreach ($this->_widgets as $w) {
+                    $w['value'] = is_callable($w['value']) ? ($w['value'])() : $w['value'];
+                    $widgets[] = $w;
+                }
+                return json_encode($widgets);
+            }
+
             if($this->_type == PagesType::List || $this->_type == PagesType::ListPart) {
                 $r = '[';
 
@@ -475,6 +514,10 @@
                             foreach ($record->_fields as $field) {
                                 $r .= '"' . $field->_name . '":"' . $field->_value . '",';
                             }
+                            foreach ($record->_flowFields as $ff) {
+                                if ($ff->_value !== null)
+                                    $r .= '"' . $ff->_name . '":"' . $ff->_value . '",';
+                            }
                             $r = substr($r, 0, strlen($r) - 1);
                         }
                         $r .= '},';
@@ -484,24 +527,60 @@
                 $r .= ']';
                 return $r;
             }else if($this->_type == PagesType::Card || $this->_type == PagesType::Document){
-                $this->OnAfterGetRecord($this->rec);                    
-                    $r = '{';
-                            if(count($this->rec->recordSet) >0) {
-                                foreach ($this->rec->recordSet[0]->_fields as $field) {
-                                    $r .= '"' . $field->_name . '":"' . $field->value . '",';
-                                }
-                                $r = substr($r, 0, strlen($r) - 1);
-                            }
-                    $r .= '}';
-                    $r .= '';
+                $this->OnAfterGetRecord($this->rec);
+                $r = '{';
+                if(count($this->rec->recordSet) > 0) {
+                    foreach ($this->rec->recordSet[0]->_fields as $field) {
+                        $r .= '"' . $field->_name . '":"' . $field->value . '",';
+                    }
+                    foreach ($this->rec->recordSet[0]->_flowFields as $ff) {
+                        if ($ff->_value !== null)
+                            $r .= '"' . $ff->_name . '":"' . $ff->_value . '",';
+                    }
+                    $r = substr($r, 0, strlen($r) - 1);
+                }
+                $r .= '}';
                 return $r;
             }
         }
 
-        public function Message($message){            
+        public function Message($message){
             header("Content-type: application/json");
             $this->rec->refresh();
             die(json_encode(array("status"=>100, "message"=>$message, "page" => json_decode($this))));
+        }
+
+        /**
+         * Enregistre (upsert) la page dans la table `views` à chaque instanciation.
+         * Silencieux si la table n'existe pas encore (premier démarrage avant SystemUpdateSchema).
+         * Appelé automatiquement via __set('sourceTable') et explicitement par les RoleCenter.
+         */
+        protected function registerInViews() {
+            if (!class_exists('Views') || !defined('db')) return;
+            if (!db->table_exists('views')) return;
+
+            $view = new Views();
+            $view->setRange('Id', $this->_id);
+            if ($view->FindFirst()) {
+                $view->Validate('className', get_class($this));
+                $view->Validate('caption', $this->_caption);
+                $view->Validate('pageType', $this->_type->name);
+                if (isset($this->_rec)) {
+                    $view->Validate('SourceTableID', $this->_rec->table_id);
+                    $view->Validate('SourceTableName', $this->_rec->table_name);
+                }
+                $view->Modify(false);
+            } else {
+                $view->Validate('Id', $this->_id);
+                $view->Validate('className', get_class($this));
+                $view->Validate('caption', $this->_caption);
+                $view->Validate('pageType', $this->_type->name);
+                if (isset($this->_rec)) {
+                    $view->Validate('SourceTableID', $this->_rec->table_id);
+                    $view->Validate('SourceTableName', $this->_rec->table_name);
+                }
+                $view->Insert(false);
+            }
         }
                
         /*public function Confirm($message){

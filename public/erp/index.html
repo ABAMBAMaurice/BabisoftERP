@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BabiSoft ERP</title>
+  <link rel="stylesheet" href="css/bc.css">
+</head>
+<body>
+
+  <!-- ── Top Navigation ─────────────────────────────────────────── -->
+  <header id="topnav">
+    <div class="topnav-brand">
+      <div class="brand-logo">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+          <polygon points="12,2 22,8.5 22,15.5 12,22 2,15.5 2,8.5" fill="#fff" opacity=".9"/>
+          <polygon points="12,6 18,9.5 18,14.5 12,18 6,14.5 6,9.5" fill="#0078d4"/>
+        </svg>
+      </div>
+      <span class="brand-name">BabiSoft</span>
+      <div class="brand-sep"></div>
+      <span id="module-label" class="module-label"></span>
+    </div>
+
+    <nav id="breadcrumb" class="breadcrumb-nav" aria-label="Navigation"></nav>
+
+    <div class="topnav-right">
+      <button class="topnav-icon-btn" title="Rechercher (Ctrl+K)" onclick="Search.toggle()" id="btn-search">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        </svg>
+        <kbd>Ctrl K</kbd>
+      </button>
+      <!-- Menu utilisateur -->
+      <div class="user-menu" id="user-menu">
+        <div class="user-avatar" id="user-avatar" onclick="toggleUserMenu()" title="Mon compte">BS</div>
+        <div class="user-dropdown hidden" id="user-dropdown">
+          <div class="user-dropdown-hd">
+            <div class="user-dd-name" id="dd-name">—</div>
+            <div class="user-dd-email" id="dd-email">—</div>
+            <div class="user-dd-tenant" id="dd-tenant"></div>
+          </div>
+          <div class="user-dropdown-body">
+            <button class="user-dd-item" onclick="App.logout()">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
+              </svg>
+              Se déconnecter
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ── Search overlay ─────────────────────────────────────────── -->
+  <div id="search-overlay" class="search-overlay hidden" onclick="if(event.target===this) Search.toggle()">
+    <div class="search-panel">
+      <div class="search-input-wrap">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        </svg>
+        <input id="search-input" type="text" placeholder="Rechercher une page…"
+               oninput="Search.query(this.value)"
+               onkeydown="Search.onKey(event)" autocomplete="off">
+        <kbd>Esc</kbd>
+      </div>
+      <div id="search-results" class="search-results"></div>
+    </div>
+  </div>
+
+  <!-- ── Layout ─────────────────────────────────────────────────── -->
+  <div id="layout">
+    <aside id="sidebar">
+      <div id="sidebar-nav"></div>
+    </aside>
+
+    <main id="main">
+      <div id="page-root">
+        <div class="welcome-screen">
+          <div class="welcome-inner">
+            <div class="welcome-logo">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+                <polygon points="12,2 22,8.5 22,15.5 12,22 2,15.5 2,8.5" fill="#fff" opacity=".9"/>
+                <polygon points="12,6 18,9.5 18,14.5 12,18 6,14.5 6,9.5" fill="rgba(255,255,255,.35)"/>
+              </svg>
+            </div>
+            <h2>BabiSoft ERP</h2>
+            <p>Sélectionnez un module dans la barre latérale pour commencer.</p>
+            <div class="welcome-hint">
+              <span>Recherche rapide</span>
+              <kbd>Ctrl</kbd><kbd>K</kbd>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- ── Toast container ────────────────────────────────────────── -->
+  <div id="toasts" aria-live="polite" aria-atomic="false"></div>
+
+  <!-- ── Modal ──────────────────────────────────────────────────── -->
+  <div id="modal" class="modal-overlay hidden" role="dialog" aria-modal="true"
+       onclick="if(event.target===this) Modal.close()">
+    <div class="modal-box">
+      <div class="modal-hd">
+        <h3 id="modal-title"></h3>
+        <button class="modal-close-btn" onclick="Modal.close()" aria-label="Fermer">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+      <div id="modal-body" class="modal-bd"></div>
+      <div id="modal-footer" class="modal-ft"></div>
+    </div>
+  </div>
+
+  <script src="https://unpkg.com/feather-icons/dist/feather.min.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

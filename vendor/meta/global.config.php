@@ -50,6 +50,11 @@ require_once('vendor/meta/Objects/Pages/Pagetype.enum.php');
 require_once('vendor/meta/Objects/Controls/Control.class.php');
 require_once('vendor/meta/Objects/Pages/Page.class.php');
 require_once('vendor/meta/Objects/Controls/SubRepeater.class.php');
+
+// ── Pages pilotées par métadonnées (MetaPage extends Page) ───────────────
+require_once('vendor/meta/Objects/Pages/PageDescriptor.class.php');
+require_once('vendor/meta/Objects/Pages/MetaPage.class.php');
+require_once('vendor/meta/Objects/Pages/PageRegistry.class.php');
 $currentObject = null;
 $base = db;
 

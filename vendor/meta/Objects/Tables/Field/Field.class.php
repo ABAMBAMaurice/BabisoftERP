@@ -1,7 +1,9 @@
 <?php
 
     require('Field.interface.php');
-    
+    require('CalcFormula.class.php');
+    //require('FlowField.class.php');
+
     class Field implements Fields{
         private $_id;
         private $_name;

@@ -82,35 +82,13 @@ function getSecureJsonInput() {
   
 //region Routes d'authentification
     App::route('GET', '/X-CSRF-Token', function () {
-        header('Content-Type: application/json');        
-
-        // Générer le token CSRF si Security est disponible
-        if (class_exists('Security') && method_exists('Security', 'generateCSRFToken')) {
-            $csrfToken = AuthenticationManagement::generateCSRFToken($_SERVER['REMOTE_ADDR']);
-        } else {
-            // Fallback simple si Security n'est pas disponible
-            if (!isset($_SESSION)) {
-                session_set_cookie_params(['secure' => true, 'httponly' => true]);
-                session_start();
-            }
-            $csrfToken = bin2hex(random_bytes(32));
-            $_SESSION['X-CSRF-Token'] = $csrfToken;
-        }
-        
+        header('Content-Type: application/json');
+        $ip = ($_SERVER['REMOTE_ADDR'] === '::1') ? '127.0.0.1' : $_SERVER['REMOTE_ADDR'];
+        $csrfToken = AuthenticationManagement::generateCSRFToken($ip);
         echo json_encode([
-            'status' => 200,
-            'X-CSRF-Token' => $csrfToken
-        ]);
-
-        /*header('Content-Type: application/json');
-        // Utilise Security::generateCSRFToken() qui stocke en $_SESSION
-        // pour être compatible avec Security::verifyCSRFToken() appelé au login
-        $token = class_exists('Security') ? Security::generateCSRFToken() : bin2hex(random_bytes(32));
-        echo json_encode([
-            'status' => 200,
-            'csrf-token' => $token,
-            'X-CSRF-Token' => $token
-        ]);*/
+            'status'     => 200,
+            'csrf-token' => $csrfToken,
+        ], JSON_UNESCAPED_UNICODE);
     });
 //endregion
 

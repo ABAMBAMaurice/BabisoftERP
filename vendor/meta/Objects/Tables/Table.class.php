@@ -2,11 +2,13 @@
 
     require('Table.interface.php');
     require('Field/Field.class.php');
+    require('Field/FlowField.class.php');
     
     class Table implements Tables{
         private $_id;
         private $_name;
         private $_fields = array();
+        private array $_flowFields = [];
         private $_recordSet = array();
         private $_keys = array();
         private $_current_keys = "";
@@ -96,9 +98,14 @@
                         }
                         return $stringKey;
                         break;
+                    case '_flowFields':
+                        return $this->_flowFields;
+                        break;
                     default:
                         if(isset($this->_fields[$name])){
                             return $this->_fields[$name];
+                        }else if(isset($this->_flowFields[$name])){
+                            return $this->_flowFields[$name];
                         }else{
                             Error("Le champs ".$name." n'existe pas dans la table ".$this->_id." - ".$this->_name);
                         }
@@ -759,7 +766,74 @@
             $this->copyRecord($new);
             $this->_recordSet = $new->_recordSet;
             return $new;
-            //array_push($this->_recordSet,$new);
+        }
+
+        /**
+         * Déclare un FlowField (champ calculé, non persisté en base).
+         *
+         * @param int         $id       Identifiant unique du champ dans la table
+         * @param string      $name     Nom du champ (ex: 'Nb_Autorisations')
+         * @param string      $type     Type SQL indicatif (FieldType::integer(), etc.)
+         * @param CalcFormula $formula  Formule de calcul (Count, Sum, Exist, Lookup…)
+         * @param string|null $caption  Libellé affiché
+         */
+        public function flowField(int $id, string $name, string $type, CalcFormula $formula, ?string $caption = null): FlowField {
+            $ff = new FlowField($id, $name, $type, $formula, $caption ?? $name);
+            $this->_flowFields[$name] = $ff;
+            return $ff;
+        }
+
+        /**
+         * Calcule la valeur des FlowFields demandés sur l'enregistrement courant.
+         * Doit être appelé explicitement, typiquement dans OnAfterGetRecord().
+         *
+         * Exemple :
+         *   $profile->CalcFields('Nb_Autorisations', 'Solde');
+         *   echo $profile->Nb_Autorisations->value; // → 5
+         */
+        public function CalcFields(string ...$fieldNames): void {
+            foreach ($fieldNames as $name) {
+                if (!isset($this->_flowFields[$name])) continue;
+
+                $ff      = $this->_flowFields[$name];
+                $formula = $ff->calcFormula;
+
+                $rel = new $formula->tableClass();
+
+                foreach ($formula->filters as $relField => $currentField) {
+                    $rel->setRange($relField, $this->_fields[$currentField]->_value);
+                }
+
+                $ff->_value = match ($formula->type) {
+                    'Count'   => $rel->aggregateSQL('COUNT'),
+                    'Sum'     => $rel->aggregateSQL('SUM',   $formula->field),
+                    'Min'     => $rel->aggregateSQL('MIN',   $formula->field),
+                    'Max'     => $rel->aggregateSQL('MAX',   $formula->field),
+                    'Average' => $rel->aggregateSQL('AVG',   $formula->field),
+                    'Exist'   => $rel->FindFirst() ? '1' : '0',
+                    'Lookup'  => $rel->FindFirst() ? $rel->{$formula->field}->_value : null,
+                    default   => null,
+                };
+            }
+        }
+
+        /**
+         * Exécute une requête SQL d'agrégation avec les filtres courants.
+         * Utilisé en interne par CalcFields.
+         *
+         * @param string      $fn    Fonction SQL : COUNT, SUM, MIN, MAX, AVG
+         * @param string|null $field Champ cible (null → COUNT(*))
+         */
+        public function aggregateSQL(string $fn, ?string $field = null): mixed {
+            $col   = ($field === null) ? '*' : '`'.$field.'`';
+            $query = 'SELECT '.$fn.'('.$col.') AS result'
+                   . ' FROM `'.$this->_name.'`'
+                   . ' WHERE (`deleted_at` = "0000-00-00 00:00:00" OR `deleted_at` IS NULL)'
+                   . $this->_filter;
+            $rows  = db->getResultAssoc($query);
+            if (db->getError()[1] != 0)
+                Error('Erreur SQL N°: '.db->getError()[1].'<br>message: '.db->getError()[2]);
+            return $rows[0]['result'] ?? null;
         }
     }
     
